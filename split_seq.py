@@ -30,12 +30,12 @@ def split_overlap_seq(seq):
         seq1 = seq
         pad_seq = padding_sequence_new(seq1)
     else:
-        #if remain_ins >= overlap_size:
+        if remain_ins > 10:
             #pdb.set_trace()
-        start = len(seq) -window_size
-        seq1 = seq[start:]
-        pad_seq = padding_sequence_new(seq1)
-        print pad_seq
+            #start = len(seq) -window_size
+            seq1 = seq[-window_size:]
+            pad_seq = padding_sequence_new(seq1)
+            print pad_seq
 
         
 seq= 'TTATCTCCTAGAAGGGGAGGTTACCTCTTCAAATGAGGAGGCCCCCCAGTCCTGTTCCTCCACCAGCCCCACTACGGAATGGGAGCGCATTTTAGGGTGGTTACTCTGAAACAAGGAGGGCCTAGGAATCTAAGAGTGTGAAGAGTAGAGAGGAAGTACCTCTACCCACCAGCCCACCCGTGCGGGGGAAGATGTAGCAGCTTCTTCTCCGAACCAA'
