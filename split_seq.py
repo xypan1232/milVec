@@ -1,6 +1,7 @@
 import os
 import pdb
 import gzip
+import numpy as np
 #from pandas.core import window
        
 
@@ -81,6 +82,21 @@ def split_overlap_seq(seq):
             seq1 = seq[-window_size:]
             pad_seq = padding_sequence_new(seq1)
             print pad_seq
+def get_6_nucleotide_composition(tris, seq, ordict):
+    seq_len = len(seq)
+    tri_feature = []
+    k = len(tris[0])
+    #tmp_fea = [0] * len(tris)
+    for x in range(len(seq) + 1- k):
+        kmer = seq[x:x+k]
+        if kmer in tris:
+            ind = tris.index(kmer)
+            tri_feature.append(ordict[str(ind)])
+        else:
+            tri_feature.append(-1)
+    #tri_feature = [float(val)/seq_len for val in tmp_fea]
+        #pdb.set_trace()        
+    return np.asarray(tri_feature)
 
  def get_all_embedding():
     trids =  get_6_trids()
