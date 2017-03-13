@@ -62,6 +62,7 @@ def split_overlap_seq(seq):
     window_size = 101
     overlap_size = 20
     #pdb.set_trace()
+    bag_seqs = []
     num_ins = len(seq)/window_size
     remain_ins = len(seq)%window_size
     bag = []
@@ -71,17 +72,20 @@ def split_overlap_seq(seq):
             start = 0
         end = start + window_size
         subseq = seq[start:end]
-        print subseq
+        bag_seqs.append(subseq)
     if num_ins == 0:
         seq1 = seq
         pad_seq = padding_sequence_new(seq1)
+        bag_seqs.append(pad_seq)
     else:
         if remain_ins > 10:
             #pdb.set_trace()
             #start = len(seq) -window_size
             seq1 = seq[-window_size:]
             pad_seq = padding_sequence_new(seq1)
-            print pad_seq
+            bag_seqs.append(pad_seq)
+    return bag_seqs
+            
 def get_6_nucleotide_composition(tris, seq, ordict):
     seq_len = len(seq)
     tri_feature = []
@@ -98,32 +102,20 @@ def get_6_nucleotide_composition(tris, seq, ordict):
         #pdb.set_trace()        
     return np.asarray(tri_feature)
 
- def get_all_embedding(protein):
-    trids =  get_6_trids()
-    ord_dict = read_rna_dict()
-    embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
-    data, label = loaddata_graphprot(protein)
-    
-    test_data, true_y = loaddata_graphprot(protein, train = False)
-       
-    for key, val in pairs.iteritems():
-        ind1 = trids.index(key)
-        emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
+def read_seq_graphprot(seq_file, label = 1):
+   seq_list = []
+   labels = []
+   seq = ''
+   with open(seq_file, 'r') as fp:
+       for line in fp:
+           if line[0] == '>':
+               name = line[1:-1]
+           else:
+               seq = line[:-1].upper()
+               seq_list.append(seq)
+               labels.append(label)
 
- def read_seq_graphprot(seq_file, label = 1):
-    seq_list = []
-    labels = []
-    seq = ''
-    with open(seq_file, 'r') as fp:
-        for line in fp:
-            if line[0] == '>':
-                name = line[1:-1]
-            else:
-                seq = line[:-1].upper()
-                seq_list.append(seq)
-                labels.append(label)
-
-    return seq_list, labels
+   return seq_list, labels
 
 def load_graphprot_data(protein, train = True, path = '/home/panxy/eclipse/rna-protein/data/GraphProt_CLIP_sequences/'):
     data = dict()
@@ -153,6 +145,33 @@ def load_graphprot_data(protein, train = True, path = '/home/panxy/eclipse/rna-p
     data["Y"] = np.array(mix_label)
     
     return data
+
+def get_bag_data(data, tris, ordict):
+    bags = []
+    seqs = data["seq"]
+    
+    for seq in seqs:
+        bag_seqs = split_overlap_seq(seq)
+        flat_array = []
+        for bag_seq in bag_seqs:
+            tri_fea = get_6_nucleotide_composition(tris, bag_seq, ordict)
+        flat_array = np.ndarray.flatten(tri_fea)
+        bags.append(flat_array)
+    return bags
+
+def get_all_embedding(protein):
+   trids =  get_6_trids()
+   ord_dict = read_rna_dict()
+   embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
+   data, label = loaddata_graphprot(protein)
+   
+   test_data, true_y = loaddata_graphprot(protein, train = False)
+      
+   for key, val in pairs.iteritems():
+       ind1 = trids.index(key)
+       emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
+
+
               
 seq= 'TTATCTCCTAGAAGGGGAGGTTACCTCTTCAAATGAGGAGGCCCCCCAGTCCTGTTCCTCCACCAGCCCCACTACGGAATGGGAGCGCATTTTAGGGTGGTTACTCTGAAACAAGGAGGGCCTAGGAATCTAAGAGTGTGAAGAGTAGAGAGGAAGTACCTCTACCCACCAGCCCACCCGTGCGGGGGAAGATGTAGCAGCTTCTTCTCCGAACCAA'
 print len(seq)
