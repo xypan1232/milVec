@@ -98,11 +98,14 @@ def get_6_nucleotide_composition(tris, seq, ordict):
         #pdb.set_trace()        
     return np.asarray(tri_feature)
 
- def get_all_embedding():
+ def get_all_embedding(protein):
     trids =  get_6_trids()
     ord_dict = read_rna_dict()
     embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
-
+    data, label = loaddata_graphprot(protein)
+    
+    test_data, true_y = loaddata_graphprot(protein, train = False)
+       
     for key, val in pairs.iteritems():
         ind1 = trids.index(key)
         emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
