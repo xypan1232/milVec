@@ -107,6 +107,50 @@ def get_6_nucleotide_composition(tris, seq, ordict):
         ind1 = trids.index(key)
         emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
 
+ def read_seq_graphprot(seq_file, label = 1):
+    seq_list = []
+    labels = []
+    seq = ''
+    with open(seq_file, 'r') as fp:
+        for line in fp:
+            if line[0] == '>':
+                name = line[1:-1]
+            else:
+                seq = line[:-1].upper()
+                seq_list.append(seq)
+                labels.append(label)
+
+    return seq_list, labels
+
+def load_graphprot_data(protein, train = True, path = '/home/panxy/eclipse/rna-protein/data/GraphProt_CLIP_sequences/'):
+    data = dict()
+    tmp = []
+    listfiles = os.listdir(path)
+    
+    key = '.train.'
+    if not train:
+        key = '.ls.'
+    mix_label = []
+    mix_seq = []
+    mix_structure = []    
+    for tmpfile in listfiles:
+        if protein not in tmpfile:
+            continue
+        if key in tmpfile:
+            if 'positive' in tmpfile:
+                label = 1
+            else:
+                label = 0
+            seqs, labels = read_seq_graphprot(os.path.join(path, tmpfile), label = label)
+            #pdb.set_trace()
+            mix_label = mix_label + labels
+            mix_seq = mix_seq + seqs
+    
+    data["seq"] = mix_seq
+    data["Y"] = np.array(mix_label)
+    
+    return data
+              
 seq= 'TTATCTCCTAGAAGGGGAGGTTACCTCTTCAAATGAGGAGGCCCCCCAGTCCTGTTCCTCCACCAGCCCCACTACGGAATGGGAGCGCATTTTAGGGTGGTTACTCTGAAACAAGGAGGGCCTAGGAATCTAAGAGTGTGAAGAGTAGAGAGGAAGTACCTCTACCCACCAGCCCACCCGTGCGGGGGAAGATGTAGCAGCTTCTTCTCCGAACCAA'
 print len(seq)
 split_overlap_seq(seq)
