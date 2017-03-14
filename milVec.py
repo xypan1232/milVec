@@ -113,6 +113,7 @@ def read_seq_graphprot(seq_file, label = 1):
                name = line[1:-1]
            else:
                seq = line[:-1].upper()
+               seq = seq.replace('T', 'U')
                seq_list.append(seq)
                labels.append(label)
 
@@ -147,32 +148,55 @@ def load_graphprot_data(protein, train = True, path = '/home/panxy/eclipse/rna-p
     
     return data
 
-def get_bag_data(data, tris, ordict):
+def loaddata_graphprot(protein, train = True, ushuffle = True):
+    #pdb.set_trace()
+    data = load_graphprot_data(protein, train = train)
+    label = data["Y"]
+    rna_array = []
+    trids = get_6_trids()
+    nn_dict = read_rna_dict()
+    for rna_seq in data["seq"]:
+        #rna_seq = rna_seq_dict[rna]
+        rna_seq = rna_seq.replace('T', 'U')
+        
+        
+        tri_feature = get_6_nucleotide_composition(trids, rna_seq_pad, nn_dict)
+        rna_array.append(tri_feature)
+    
+    return np.array(rna_array), label
+
+def get_bag_data(data, tris, ordict, embedding_rna_weights):
     bags = []
     seqs = data["seq"]
-    
+    labels = data["Y"]
     for seq in seqs:
         bag_seqs = split_overlap_seq(seq)
         flat_array = []
         for bag_seq in bag_seqs:
             tri_fea = get_6_nucleotide_composition(tris, bag_seq, ordict)
-        flat_array = np.ndarray.flatten(tri_fea)
+        for tri in tri_fea:
+            if tri == -1:
+                flat_array.append([0]*15)
+            else:
+                flat_array.append(embedding_rna_weights[tri])
+        flat_array = np.ndarray.flatten(flat_array)
         bags.append(flat_array)
     return bags
 
-def get_all_embedding(protein):
-    trids =  get_6_trids()
-    ord_dict = read_rna_dict()
-    embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
-    data, label = loaddata_graphprot(protein)
-   
-    test_data, true_y = loaddata_graphprot(protein, train = False)
-      
-    for key, val in pairs.iteritems():
-        ind1 = trids.index(key)
-        emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
+def get_all_embedding(protein, trids, ordict, embedding_rna_weights):
+    
+    data, label = load_graphprot_data(protein)
+    train_bags = get_bag_data(data, tris, ordict, embedding_rna_weights)
+    
+    test_data, true_y = load_graphprot_data(protein, train = False)
+    test_bags = get_bag_data(test_data, tris, ordict, embedding_rna_weights) 
+    
+    return train_bags, label, test_bags, true_y
+    #for data in pairs.iteritems():
+    #    ind1 = trids.index(key)
+    #    emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
 
-def run_mil_classifier():
+def run_mil_classifier(train_bags, train_labels, test_bags, test_labels):
     classifiers = {}
     classifiers['MissSVM'] = misvm.MissSVM(kernel='linear', C=1.0, max_iters=10)
     classifiers['sbMIL'] = misvm.sbMIL(kernel='linear', eta=0.1, C=1.0)
@@ -190,11 +214,16 @@ def run_mil_classifier():
 
 def run_milvec():
     data_dir = '/home/panxy/eclipse/rna-protein/data/GraphProt_CLIP_sequences/'
+    trids =  get_6_trids()
+    ord_dict = read_rna_dict()
+    embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
     for protein in os.listdir(data_dir):
         
         protein = protein.split('.')[0]
         print protein
-       get_all_embedding(protein)
+       train_bags, train_labels, test_bags, test_labels = get_all_embedding(protein, trids, ordict, embedding_rna_weights)
+        run_mil_classifier(train_bags, train_labels, test_bags, test_labels)
+run_milvec()
 #seq= 'TTATCTCCTAGAAGGGGAGGTTACCTCTTCAAATGAGGAGGCCCCCCAGTCCTGTTCCTCCACCAGCCCCACTACGGAATGGGAGCGCATTTTAGGGTGGTTACTCTGAAACAAGGAGGGCCTAGGAATCTAAGAGTGTGAAGAGTAGAGAGGAAGTACCTCTACCCACCAGCCCACCCGTGCGGGGGAAGATGTAGCAGCTTCTTCTCCGAACCAA'
 #print len(seq)
 #split_overlap_seq(seq)
