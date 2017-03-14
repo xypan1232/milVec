@@ -3,7 +3,7 @@ import pdb
 import gzip
 import numpy as np
 #from pandas.core import window
-       
+import misvm       
 
 def padding_sequence_new(seq, max_len = 101, repkey = 'N'):
     seq_len = len(seq)
@@ -160,16 +160,16 @@ def get_bag_data(data, tris, ordict):
     return bags
 
 def get_all_embedding(protein):
-   trids =  get_6_trids()
-   ord_dict = read_rna_dict()
-   embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
-   data, label = loaddata_graphprot(protein)
+    trids =  get_6_trids()
+    ord_dict = read_rna_dict()
+    embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
+    data, label = loaddata_graphprot(protein)
    
-   test_data, true_y = loaddata_graphprot(protein, train = False)
+    test_data, true_y = loaddata_graphprot(protein, train = False)
       
-   for key, val in pairs.iteritems():
-       ind1 = trids.index(key)
-       emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
+    for key, val in pairs.iteritems():
+        ind1 = trids.index(key)
+        emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
 
 def run_mil_classifier():
     classifiers = {}
@@ -186,7 +186,14 @@ def run_mil_classifier():
 
     for algorithm, accuracy in accuracies.items():
         print '\n%s Accuracy: %.1f%%' % (algorithm, 100 * accuracy)
-              
-seq= 'TTATCTCCTAGAAGGGGAGGTTACCTCTTCAAATGAGGAGGCCCCCCAGTCCTGTTCCTCCACCAGCCCCACTACGGAATGGGAGCGCATTTTAGGGTGGTTACTCTGAAACAAGGAGGGCCTAGGAATCTAAGAGTGTGAAGAGTAGAGAGGAAGTACCTCTACCCACCAGCCCACCCGTGCGGGGGAAGATGTAGCAGCTTCTTCTCCGAACCAA'
-print len(seq)
-split_overlap_seq(seq)
+
+def run_milvec():
+    data_dir = '/home/panxy/eclipse/rna-protein/data/GraphProt_CLIP_sequences/'
+    for protein in os.listdir(data_dir):
+        
+        protein = protein.split('.')[0]
+        print protein
+       get_all_embedding(protein)
+#seq= 'TTATCTCCTAGAAGGGGAGGTTACCTCTTCAAATGAGGAGGCCCCCCAGTCCTGTTCCTCCACCAGCCCCACTACGGAATGGGAGCGCATTTTAGGGTGGTTACTCTGAAACAAGGAGGGCCTAGGAATCTAAGAGTGTGAAGAGTAGAGAGGAAGTACCTCTACCCACCAGCCCACCCGTGCGGGGGAAGATGTAGCAGCTTCTTCTCCGAACCAA'
+#print len(seq)
+#split_overlap_seq(seq)
