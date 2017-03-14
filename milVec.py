@@ -66,8 +66,12 @@ def split_overlap_seq(seq):
     overlap_size = 20
     #pdb.set_trace()
     bag_seqs = []
-    num_ins = len(seq)/window_size
-    remain_ins = len(seq)%window_size
+    seq_len = len(seq)
+    if seq_len >= window_size:
+        num_ins = (seq_len - 101)/(window_size - overlap_size) + 1
+        remain_ins = (seq_len - 101)%(window_size - overlap_size)
+    else:
+        num_ins = 0
     bag = []
     end = 0
     for ind in range(num_ins):
@@ -173,18 +177,28 @@ def get_bag_data(data, tris, ordict, embedding_rna_weights):
     seqs = data["seq"]
     labels = data["Y"]
     for seq in seqs:
+        #pdb.set_trace()
         bag_seqs = split_overlap_seq(seq)
-        flat_array = []
+        #flat_array = []
+        bag_subt = []
         for bag_seq in bag_seqs:
             tri_fea = get_6_nucleotide_composition(tris, bag_seq, ordict)
-        #pdb.set_trace()
-        for tri in tri_fea:
-            if tri == -1:
-                flat_array = flat_array + [0]*25
-            else:
-                flat_array = flat_array + list(embedding_rna_weights[tri])
-        #flat_array = np.ndarray.flatten(np.ndarray(flat_array))
-        bags.append(flat_array)
+            #pdb.set_trace()
+            flat_array = []
+            for tri in tri_fea:
+                if tri == -1:
+                    flat_array.append([0]*25)
+                else:
+                    flat_array.append(embedding_rna_weights[tri])
+            try:
+                flat_array = np.reshape(np.array(flat_array), 2400)
+            except:
+                pdb.set_trace()
+            bag_subt.append(flat_array)
+            #pdb.set_trace()
+            #flat_array = flat_array + list(embedding_rna_weights[tri])
+            #flat_array = np.ndarray.flatten(np.ndarray(flat_array))
+        bags.append(np.array(bag_subt))
     return bags, labels
 
 def get_all_embedding(protein, trids, ordict, embedding_rna_weights):
