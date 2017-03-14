@@ -66,8 +66,9 @@ def split_overlap_seq(seq):
     num_ins = len(seq)/window_size
     remain_ins = len(seq)%window_size
     bag = []
+    end = 0
     for ind in range(num_ins):
-        start = ind *window_size - overlap_size
+        start = end - overlap_size
         if start < 0:
             start = 0
         end = start + window_size
