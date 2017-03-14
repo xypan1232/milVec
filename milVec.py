@@ -171,7 +171,21 @@ def get_all_embedding(protein):
        ind1 = trids.index(key)
        emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
 
+def run_mil_classifier():
+    classifiers = {}
+    classifiers['MissSVM'] = misvm.MissSVM(kernel='linear', C=1.0, max_iters=10)
+    classifiers['sbMIL'] = misvm.sbMIL(kernel='linear', eta=0.1, C=1.0)
+    classifiers['SIL'] = misvm.SIL(kernel='linear', C=1.0)
 
+    # Train/Evaluate classifiers
+    accuracies = {}
+    for algorithm, classifier in classifiers.items():
+        classifier.fit(train_bags, train_labels)
+        predictions = classifier.predict(test_bags)
+        accuracies[algorithm] = np.average(test_labels == np.sign(predictions))
+
+    for algorithm, accuracy in accuracies.items():
+        print '\n%s Accuracy: %.1f%%' % (algorithm, 100 * accuracy)
               
 seq= 'TTATCTCCTAGAAGGGGAGGTTACCTCTTCAAATGAGGAGGCCCCCCAGTCCTGTTCCTCCACCAGCCCCACTACGGAATGGGAGCGCATTTTAGGGTGGTTACTCTGAAACAAGGAGGGCCTAGGAATCTAAGAGTGTGAAGAGTAGAGAGGAAGTACCTCTACCCACCAGCCCACCCGTGCGGGGGAAGATGTAGCAGCTTCTTCTCCGAACCAA'
 print len(seq)
