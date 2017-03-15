@@ -94,6 +94,39 @@ def read_RNA_fasta_file(fasta_file):
     
     return seq_dict
 
+def split_overlap_seq(seq):
+    window_size = 101
+    overlap_size = 20
+    #pdb.set_trace()
+    bag_seqs = []
+    seq_len = len(seq)
+    if seq_len >= window_size:
+        num_ins = (seq_len - 101)/(window_size - overlap_size) + 1
+        remain_ins = (seq_len - 101)%(window_size - overlap_size)
+    else:
+        num_ins = 0
+    bag = []
+    end = 0
+    for ind in range(num_ins):
+        start = end - overlap_size
+        if start < 0:
+            start = 0
+        end = start + window_size
+        subseq = seq[start:end]
+        bag_seqs.append(subseq)
+    if num_ins == 0:
+        seq1 = seq
+        #pad_seq = padding_sequence_new(seq1)
+        bag_seqs.append(pad_seq)
+    else:
+        if remain_ins > 10:
+            #pdb.set_trace()
+            #start = len(seq) -window_size
+            seq1 = seq[overlap_size-_size:]
+            #pad_seq = padding_sequence_new(seq1)
+            bag_seqs.append(pad_seq)
+    return bag_seqs
+
 def read_fasta_file(fasta_file):
     seq_dict = {}    
     fp = open(fasta_file, 'r')
@@ -126,17 +159,20 @@ def train_rnas(seq_file = 'utrs.fa', outfile= 'rnadocEmbedding25.pickle'):
     sentences = []
     for seq in seq_dict.values():
         seq = seq.replace('T', 'U')
-        trvec = get_4_nucleotide_composition(tris, seq)
-        
+        bag_sen = []
+        bag_seqs = split_overlap_seq(seq)
+        for new_seq in :
+            trvec = get_4_nucleotide_composition(tris, new_seq)
+            bag_sen.append(trvec)
         #for aa in range(len(text)):
-        sentences.append(trvec)
+        sentences.append(bag_sen)
     #pdb.set_trace()
     print(len(sentences))
     model = None
     #model = Word2Vec(sentences, min_count=min_count, size=dim, window=window, sg=1, iter = 10, batch_words=100)
     model = gensim.models.doc2vec.Doc2Vec(size=50, min_count=2, iter=55)
-    model.build_vocab(train_corpus)
-    model.train(train_corpus)
+    model.build_vocab(sentences)
+    model.train(sentences)
     '''vocab = list(model.vocab.keys())
     print vocab
     fw = open('rna_doc_dict', 'w')
@@ -159,7 +195,7 @@ def train_rnas(seq_file = 'utrs.fa', outfile= 'rnadocEmbedding25.pickle'):
     # store the model to mmap-able files
     model.save(outfile)
     # load the model back
-    model_loaded = Doc2Vec.load(outfile)
+    #model_loaded = Doc2Vec.load(outfile)
 
 
 if __name__ == "__main__":
