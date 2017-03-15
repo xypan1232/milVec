@@ -1,4 +1,5 @@
 import sys
+import gensim
 from gensim.models import Word2Vec
 import pandas as pd
 import numpy as np
@@ -115,16 +116,17 @@ def split_overlap_seq(seq):
         subseq = seq[start:end]
         bag_seqs.append(subseq)
     if num_ins == 0:
-        seq1 = seq
+        #seq1 = seq
         #pad_seq = padding_sequence_new(seq1)
-        bag_seqs.append(pad_seq)
+        bag_seqs.append(seq)
     else:
         if remain_ins > 10:
             #pdb.set_trace()
             #start = len(seq) -window_size
-            seq1 = seq[overlap_size-_size:]
+            new_size = end - overlap_size
+            seq1 = seq[-new_size:]
             #pad_seq = padding_sequence_new(seq1)
-            bag_seqs.append(pad_seq)
+            bag_seqs.append(seq1)
     return bag_seqs
 
 def read_fasta_file(fasta_file):
@@ -161,7 +163,7 @@ def train_rnas(seq_file = 'utrs.fa', outfile= 'rnadocEmbedding25.pickle'):
         seq = seq.replace('T', 'U')
         bag_sen = []
         bag_seqs = split_overlap_seq(seq)
-        for new_seq in :
+        for new_seq in bag_seqs:
             trvec = get_4_nucleotide_composition(tris, new_seq)
             bag_sen.append(trvec)
         #for aa in range(len(text)):
@@ -193,6 +195,7 @@ def train_rnas(seq_file = 'utrs.fa', outfile= 'rnadocEmbedding25.pickle'):
     #with open(outfile, 'w') as f:
     #    pickle.dump(model, f)
     # store the model to mmap-able files
+    pdb.set_trace()
     model.save(outfile)
     # load the model back
     #model_loaded = Doc2Vec.load(outfile)
