@@ -16,8 +16,9 @@ from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.constraints import maxnorm
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-
-
+from keras import objectives
+from keras import backend as K
+_EPSILON = K.epsilon()
 import random
 import gzip
 import pickle
@@ -61,6 +62,35 @@ def get_6_trids():
         ch5=chars[n%base]
         nucle_com.append(ch0 + ch1 + ch2 + ch3 + ch4 + ch5)
     return  nucle_com 
+def get_RNA_seq_concolutional_array(seq, motif_len = 4):
+    seq = seq.replace('U', 'T')
+    alpha = 'ACGT'
+    #for seq in seqs:
+    #for key, seq in seqs.iteritems():
+    row = (len(seq) + 2*motif_len - 2)
+    new_array = np.zeros((row, 4))
+    for i in range(motif_len-1):
+        new_array[i] = np.array([0.25]*4)
+    
+    for i in range(row-3, row):
+        new_array[i] = np.array([0.25]*4)
+        
+    #pdb.set_trace()
+    for i, val in enumerate(seq):
+        i = i + motif_len-1
+        if val not in 'ACGT':
+            new_array[i] = np.array([0.25]*4)
+            continue
+        #if val == 'N' or i < motif_len or i > len(seq) - motif_len:
+        #    new_array[i] = np.array([0.25]*4)
+        #else:
+        try:
+            index = alpha.index(val)
+            new_array[i][index] = 1
+        except:
+            pdb.set_trace()
+        #data[key] = new_array
+    return new_array
 
 def get_embed_dim_new(embed_file):
     with open(embed_file) as f:
@@ -168,7 +198,7 @@ def get_RNA_concolutional_array(seq, motif_len = 4):
         #data[key] = new_array
     return new_array
 
-def load_graphprot_data(protein, train = True, path = '../data/GraphProt_CLIP_sequences/'):
+def load_graphprot_data(protein, train = True, path = './GraphProt_CLIP_sequences/'):
     data = dict()
     tmp = []
     listfiles = os.listdir(path)
@@ -236,8 +266,10 @@ def get_bag_data(data):
 
 def custom_objective(y_true, y_pred):
     '''Just another crossentropy'''
+    y_true = K.clip(y_true, _EPSILON, 1.0-_EPSILON)
     y_true = max(y_true)
     #y_armax_index = numpy.argmax(y_pred)
+    y_pred = K.clip(y_pred, _EPSILON, 1.0-_EPSILON)
     y_new = max(y_pred)
     '''
     if y_new >= 0.5:
@@ -246,7 +278,7 @@ def custom_objective(y_true, y_pred):
         y_new_label = 0
     cce = abs(y_true - y_new_label)
     '''
-    cce = - (y_true * np.log2(y_new) + (1 - y_true)*np.log2(1-y_new))
+    cce = - (y_true * K.log(y_new) + (1 - y_true)* K.log(1-y_new))
     return cce
 
 def set_cnn_model(input_dim = 4, input_length = 107):
@@ -263,7 +295,7 @@ def set_cnn_model(input_dim = 4, input_length = 107):
     model.add(MaxPooling1D(pool_length=3))
     
     model.add(Dropout(0.5))
-    model.add(Dense(nbfilter*2, activation='relu'))
+    model.add(Dense(nbfilter, activation='relu'))
     model.add(Dropout(0.5))
 
     return model
@@ -303,7 +335,8 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
     model.compile(loss=custom_objective, optimizer='rmsprop')
     print 'model training'
     nb_epos= 10
-    for iter in range(nb_epos):
+    for iterate in range(nb_epos):
+        print 'train epoch', iterate
         for training, y in zip(train_bags, y_bags):
             tmp_size = len(training)
             ys = tmp_size *[y]
@@ -325,9 +358,9 @@ def run_milcnn():
         protein = protein.split('.')[0]
         print protein
         train_bags, train_labels, test_bags, test_labels = get_all_embedding(protein)
-        seq_net =  set_cnn_model()
+        net =  set_cnn_model()
         
-        seq_auc, seq_predict = calculate_auc(seq_net)
+        #seq_auc, seq_predict = calculate_auc(seq_net)
         hid = 16
         predict = run_network(net, hid, train_bags, test_bags, train_labels)
         
