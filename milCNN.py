@@ -18,6 +18,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from keras import objectives
 from keras import backend as K
+from keras.utils import np_utils
 _EPSILON = K.epsilon()
 import random
 import gzip
@@ -266,11 +267,11 @@ def get_bag_data(data):
 
 def custom_objective(y_true, y_pred):
     '''Just another crossentropy'''
-    y_true = K.clip(y_true, _EPSILON, 1.0-_EPSILON)
-    y_true = max(y_true)
+    #y_true = K.clip(y_true, _EPSILON, 1.0-_EPSILON)
+    #y_true = max(y_true)
     #y_armax_index = numpy.argmax(y_pred)
-    y_pred = K.clip(y_pred, _EPSILON, 1.0-_EPSILON)
-    y_new = max(y_pred)
+    y_new = K.clip(y_pred, _EPSILON, 1.0-_EPSILON)
+    #y_new = max(y_pred)
     '''
     if y_new >= 0.5:
         y_new_label = 1
@@ -328,19 +329,22 @@ def get_all_embedding(protein):
     return train_bags, label, test_bags, true_y
 
 def run_network(model, total_hid, train_bags, test_bags, y_bags):
-    model.add(Dense(1, input_shape=(total_hid,)))
+    model.add(Dense(2))
     model.add(Activation('softmax'))
-    
+    #categorical_crossentropy, binary_crossentropy
     #sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    model.compile(loss=custom_objective, optimizer='rmsprop')
+    model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
     print 'model training'
     nb_epos= 10
     for iterate in range(nb_epos):
         print 'train epoch', iterate
         for training, y in zip(train_bags, y_bags):
             tmp_size = len(training)
-            ys = tmp_size *[y]
-            model.fit(training, ys, batch_size = tmp_size, nb_epoch=1)
+            #pdb.set_trace()
+            ys = np.array([[val] for val in tmp_size *[y]])
+            #model.fit(training, ys, batch_size = tmp_size, nb_epoch=1) np_utils.to_categorical(ys)
+            ys = np_utils.to_categorical(ys)
+            model.train_on_batch(training, ys)
             
     predictions = []
     for testing in test_bags:
