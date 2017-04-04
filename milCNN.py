@@ -301,21 +301,37 @@ def set_cnn_model(input_dim = 4, input_length = 107):
 
     return model
 
-def run_mil_classifier(train_bags, train_labels, test_bags, test_labels):
-    classifiers = {}
-    classifiers['MissSVM'] = misvm.MissSVM(kernel='linear', C=1.0, max_iters=10)
-    classifiers['sbMIL'] = misvm.sbMIL(kernel='linear', eta=0.1, C=1.0)
-    #classifiers['SIL'] = misvm.SIL(kernel='linear', C=1.0)
+def set_cnn_embed(n_aa_symbols, input_length, embedded_dim, embedding_weights, nb_filter = 16):
+    #nb_filter = 64
+    filter_length = 10
+    dropout = 0.5
+    model = Sequential()
+    #pdb.set_trace()
+    model.add(Embedding(input_dim=n_aa_symbols+1, output_dim = embedded_dim, weights=[embedding_weights], input_length=input_length, trainable = True))
+    print 'after embed', model.output_shape
+    model.add(Convolution1D(nb_filter, filter_length, border_mode='valid', init='glorot_normal'))
+    model.add(Activation(LeakyReLU(.3)))
+    model.add(MaxPooling1D(pool_length=3))
+    model.add(Dropout(dropout))
+    
+    return model
 
-    # Train/Evaluate classifiers
-    accuracies = {}
-    for algorithm, classifier in classifiers.items():
-        classifier.fit(train_bags, train_labels)
-        predictions = classifier.predict(test_bags)
-        accuracies[algorithm] = np.average(test_labels == np.sign(predictions))
-
-    for algorithm, accuracy in accuracies.items():
-        print '\n%s Accuracy: %.1f%%' % (algorithm, 100 * accuracy)
+def get_cnn_network_graphprot(rna_len = 501, nb_filter = 16):
+    print 'configure cnn network'
+    embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim('rnaEmbedding25.pickle')
+    print 'symbol', n_nucl_symbols
+    model = set_cnn_embed(n_nucl_symbols, rna_len, embedded_rna_dim, embedding_rna_weights, nb_filter = nb_filter)
+    
+    #model.add(Bidirectional(LSTM(2*nbfilter)))
+    #model.add(Dropout(0.10))
+    model.add(Flatten())
+    model.add(Dense(nb_filter*50, activation='relu')) 
+    model.add(Dropout(0.50))
+    model.add(Dense(nb_filter*10, activation='sigmoid')) 
+    model.add(Dropout(0.50))
+    print model.output_shape
+    
+    return model
         
 def get_all_embedding(protein):
     
