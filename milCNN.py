@@ -5,7 +5,7 @@ import pdb
 from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten, Merge
 from keras.layers.normalization import BatchNormalization
-from keras.layers.advanced_activations import PReLU
+from keras.layers.advanced_activations import PReLU, LeakyReLU
 from keras.optimizers import SGD, RMSprop, Adadelta, Adagrad, Adam
 from keras.layers import normalization
 from keras.layers.convolutional import Convolution2D, MaxPooling2D
@@ -19,6 +19,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from keras import objectives
 from keras import backend as K
 from keras.utils import np_utils
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 _EPSILON = K.epsilon()
 import random
 import gzip
@@ -157,20 +158,20 @@ def get_6_nucleotide_composition(tris, seq, ordict):
     return np.asarray(tri_feature)
 
 def read_seq_graphprot(seq_file, label = 1):
-   seq_list = []
-   labels = []
-   seq = ''
-   with open(seq_file, 'r') as fp:
-       for line in fp:
-           if line[0] == '>':
-               name = line[1:-1]
-           else:
-               seq = line[:-1].upper()
-               seq = seq.replace('T', 'U')
-               seq_list.append(seq)
-               labels.append(label)
-
-   return seq_list, labels
+    seq_list = []
+    labels = []
+    seq = ''
+    with open(seq_file, 'r') as fp:
+        for line in fp:
+            if line[0] == '>':
+                name = line[1:-1]
+            else:
+                seq = line[:-1].upper()
+                seq = seq.replace('T', 'U')
+                seq_list.append(seq)
+                labels.append(label)
+    
+    return seq_list, labels
 
 def get_RNA_concolutional_array(seq, motif_len = 4):
     seq = seq.replace('U', 'T')
@@ -199,7 +200,7 @@ def get_RNA_concolutional_array(seq, motif_len = 4):
         #data[key] = new_array
     return new_array
 
-def load_graphprot_data(protein, train = True, path = './GraphProt_CLIP_sequences/'):
+def load_graphprot_data(protein, train = True, path = '../data/GraphProt_CLIP_sequences/'):
     data = dict()
     tmp = []
     listfiles = os.listdir(path)
@@ -294,7 +295,7 @@ def set_cnn_model(input_dim = 4, input_length = 107):
                             subsample_length=1))
     model.add(Activation('relu'))
     model.add(MaxPooling1D(pool_length=3))
-    
+    model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(nbfilter, activation='relu'))
     model.add(Dropout(0.5))
@@ -345,11 +346,11 @@ def get_all_embedding(protein):
     return train_bags, label, test_bags, true_y
 
 def run_network(model, total_hid, train_bags, test_bags, y_bags):
-    model.add(Dense(2))
+    model.add(Dense(1))
     model.add(Activation('softmax'))
     #categorical_crossentropy, binary_crossentropy
     #sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    model.compile(loss='categorical_crossentropy', optimizer='rmsprop')
+    model.compile(loss='binary_crossentropy', optimizer='rmsprop')
     print 'model training'
     nb_epos= 10
     for iterate in range(nb_epos):
@@ -357,7 +358,7 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
         for training, y in zip(train_bags, y_bags):
             tmp_size = len(training)
             #pdb.set_trace()
-            ys = np.array([[val] for val in tmp_size *[y]])
+            ys = np.array(tmp_size *[y])
             #model.fit(training, ys, batch_size = tmp_size, nb_epoch=1) np_utils.to_categorical(ys)
             ys = np_utils.to_categorical(ys)
             model.train_on_batch(training, ys)
@@ -369,7 +370,7 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
     return predictions
 
 def run_milcnn():
-    data_dir = './GraphProt_CLIP_sequences/'
+    data_dir = '../data/GraphProt_CLIP_sequences/'
     #trids =  get_6_trids()
     #ordict = read_rna_dict()
     #embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
