@@ -360,7 +360,7 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
             #pdb.set_trace()
             ys = np.array(tmp_size *[y])
             #model.fit(training, ys, batch_size = tmp_size, nb_epoch=1) np_utils.to_categorical(ys)
-            ys = np_utils.to_categorical(ys)
+            #ys = np_utils.to_categorical(ys)
             model.train_on_batch(training, ys)
             
     predictions = []
