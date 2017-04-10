@@ -156,6 +156,7 @@ def train_tag_doc(doc1):
         words = text.lower().split()
         tags = [i]
         docs.append(analyzedDocument(words, tags))
+        #docs.append(gensim.models.doc2vec.TaggedDocument(words, [i]))
     return doc
 
 def train_rnas(seq_file = 'utrs.fa', outfile= 'rnadocEmbedding25.pickle'):
