@@ -13,6 +13,8 @@ from keras.layers import LSTM, Bidirectional
 from keras.layers.embeddings import Embedding
 from keras.layers.convolutional import Convolution2D, MaxPooling2D,Convolution1D, MaxPooling1D
 from keras.callbacks import ModelCheckpoint, EarlyStopping
+#from customlayers import convolution2Dgroup, crosschannelnormalization, \
+#    splittensor, Softmax4D, Recalc, ReRank, ExtractDim, SoftReRank, ActivityRegularizerOneDim, RecalcExpand
 from keras.constraints import maxnorm
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
@@ -258,20 +260,34 @@ def get_bag_data(data):
         for bag_seq in bag_seqs:
             tri_fea = get_RNA_seq_concolutional_array(bag_seq)
             bag_subt.append(tri_fea)
-
+        
+        if len(bag_subt) >5:
+            bag_subt = bag_subt[:5]
+        if len(bag_subt) <5:
+            rand_more = 5 - len(bag_subt)
+            for ind in range(rand_more):
+                bag_subt.append(random.choice(bag_subt))
+        
         bags.append(np.array(bag_subt))
+    
+        
     return bags, labels
     #for data in pairs.iteritems():
     #    ind1 = trids.index(key)
     #    emd_weight1 = embedding_rna_weights[ord_dict[str(ind1)]]
 
+def mil_squared_error(y_true, y_pred):
+    return K.tile(K.square(K.max(y_pred) - K.max(y_true)), 5)
 
 def custom_objective(y_true, y_pred):
+    #prediction = Flatten(name='flatten')(dense_3)
+    #prediction = ReRank(k=k, label=1, name='output')(prediction)
+    #prediction = SoftReRank(softmink=softmink, softmaxk=softmaxk, label=1, name='output')(prediction)
     '''Just another crossentropy'''
     #y_true = K.clip(y_true, _EPSILON, 1.0-_EPSILON)
-    #y_true = max(y_true)
+    y_true = K.max(y_true)
     #y_armax_index = numpy.argmax(y_pred)
-    y_new = K.clip(y_pred, _EPSILON, 1.0-_EPSILON)
+    y_new = K.max(y_pred)
     #y_new = max(y_pred)
     '''
     if y_new >= 0.5:
@@ -348,24 +364,28 @@ def get_all_embedding(protein):
 def run_network(model, total_hid, train_bags, test_bags, y_bags):
     model.add(Dense(1))
     model.add(Activation('softmax'))
-    #categorical_crossentropy, binary_crossentropy
-    #sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True)
-    model.compile(loss='binary_crossentropy', optimizer='rmsprop')
+    #categorical_crossentropy, binary_crossentropy, mil_squared_error
+    #sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True) 
+    model.compile(loss=mil_squared_error, optimizer='rmsprop') 
     print 'model training'
-    nb_epos= 10
+    nb_epos= 5
+    #model.fit(train_bags, y_bags, batch_size = 60, nb_epoch=nb_epos, verbose = 0)
+    
     for iterate in range(nb_epos):
         print 'train epoch', iterate
         for training, y in zip(train_bags, y_bags):
             tmp_size = len(training)
             #pdb.set_trace()
             ys = np.array(tmp_size *[y])
-            #model.fit(training, ys, batch_size = tmp_size, nb_epoch=1) np_utils.to_categorical(ys)
+            model.fit(training, ys, batch_size = tmp_size, nb_epoch=1, verbose = 0)
             #ys = np_utils.to_categorical(ys)
-            model.train_on_batch(training, ys)
+            #model.train_on_batch(training, ys)
             
     predictions = []
     for testing in test_bags:
-        pred = model.predict_proba(testing)[:,1]
+        print 'predicting'
+        #pdb.set_trace()
+        pred = model.predict_proba(testing)
         predictions.append(max(pred))
     return predictions
 
@@ -374,6 +394,7 @@ def run_milcnn():
     #trids =  get_6_trids()
     #ordict = read_rna_dict()
     #embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
+    fw = open('result_micnn', 'w')
     for protein in os.listdir(data_dir):
         
         protein = protein.split('.')[0]
@@ -387,6 +408,8 @@ def run_milcnn():
         
         auc = roc_auc_score(test_labels, predict)
         print auc
+        fw.write(str(auc) + '\n')
+    fw.close()
         #run_mil_classifier(train_bags, train_labels, test_bags, test_labels)
 run_milcnn()
 #seq= 'TTATCTCCTAGAAGGGGAGGTTACCTCTTCAAATGAGGAGGCCCCCCAGTCCTGTTCCTCCACCAGCCCCACTACGGAATGGGAGCGCATTTTAGGGTGGTTACTCTGAAACAAGGAGGGCCTAGGAATCTAAGAGTGTGAAGAGTAGAGAGGAAGTACCTCTACCCACCAGCCCACCCGTGCGGGGGAAGATGTAGCAGCTTCTTCTCCGAACCAA'
