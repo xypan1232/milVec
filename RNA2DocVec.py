@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import pickle
 import pdb
+from collections import namedtuple
 
 min_count = 5
 dims = [50,]
@@ -148,9 +149,19 @@ def read_fasta_file(fasta_file):
     
     return seq_dict
 
+def train_tag_doc(doc1):
+    docs = []
+    analyzedDocument = namedtuple('AnalyzedDocument', 'words tags')
+    for i, text in enumerate(doc1):
+        words = text.lower().split()
+        tags = [i]
+        docs.append(analyzedDocument(words, tags))
+        #docs.append(gensim.models.doc2vec.TaggedDocument(words, [i]))
+    return doc
+
 def train_rnas(seq_file = 'utrs.fa', outfile= 'rnadocEmbedding25.pickle'):
     min_count = 5
-    dim = 25
+    dim = 50
     window = 5
 
     print('dim: ' + str(dim) + ', window: ' + str(window))
@@ -171,10 +182,12 @@ def train_rnas(seq_file = 'utrs.fa', outfile= 'rnadocEmbedding25.pickle'):
     #pdb.set_trace()
     print(len(sentences))
     model = None
+    docs = train_tag_doc(sentences)
     #model = Word2Vec(sentences, min_count=min_count, size=dim, window=window, sg=1, iter = 10, batch_words=100)
-    model = gensim.models.doc2vec.Doc2Vec(size=50, min_count=2, iter=55)
-    model.build_vocab(sentences)
-    model.train(sentences)
+    #model =  gensim.models.doc2vec.Doc2Vec(docs, size = 50, window = 300, min_count = min_count, workers = 4)
+    model = gensim.models.doc2vec.Doc2Vec(size=50, min_count=min_count, iter=50)
+    model.build_vocab(docs)
+    model.train(docs)
     '''vocab = list(model.vocab.keys())
     print vocab
     fw = open('rna_doc_dict', 'w')

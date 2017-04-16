@@ -202,7 +202,7 @@ def get_RNA_concolutional_array(seq, motif_len = 4):
         #data[key] = new_array
     return new_array
 
-def load_graphprot_data(protein, train = True, path = '../data/GraphProt_CLIP_sequences/'):
+def load_graphprot_data(protein, train = True, path = './GraphProt_CLIP_sequences/'):
     data = dict()
     tmp = []
     listfiles = os.listdir(path)
@@ -296,7 +296,8 @@ def custom_objective(y_true, y_pred):
         y_new_label = 0
     cce = abs(y_true - y_new_label)
     '''
-    cce = - (y_true * K.log(y_new) + (1 - y_true)* K.log(1-y_new))
+    logEps=1e-8
+    cce = - (y_true * K.log(y_newi+logEps) + (1 - y_true)* K.log(1-y_new + logEps))
     return cce
 
 def set_cnn_model(input_dim = 4, input_length = 107):
@@ -371,6 +372,14 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
     nb_epos= 5
     #model.fit(train_bags, y_bags, batch_size = 60, nb_epoch=nb_epos, verbose = 0)
     
+
+    #categorical_crossentropy, binary_crossentropy
+    #sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True) custom_objective
+    #model.compile(loss='binary_crossentropy', optimizer='rmsprop')
+    model.compile(loss=custom_objective, optimizer='rmsprop')
+    print 'model training'
+    nb_epos= 5
+
     for iterate in range(nb_epos):
         print 'train epoch', iterate
         for training, y in zip(train_bags, y_bags):
@@ -383,6 +392,7 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
             
     predictions = []
     for testing in test_bags:
+
         print 'predicting'
         #pdb.set_trace()
         pred = model.predict_proba(testing)
@@ -390,7 +400,7 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
     return predictions
 
 def run_milcnn():
-    data_dir = '../data/GraphProt_CLIP_sequences/'
+    data_dir = './GraphProt_CLIP_sequences/'
     #trids =  get_6_trids()
     #ordict = read_rna_dict()
     #embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
