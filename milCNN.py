@@ -202,7 +202,7 @@ def get_RNA_concolutional_array(seq, motif_len = 4):
         #data[key] = new_array
     return new_array
 
-def load_graphprot_data(protein, train = True, path = './GraphProt_CLIP_sequences/'):
+def load_graphprot_data(protein, train = True, path = '../data/GraphProt_CLIP_sequences/'):
     data = dict()
     tmp = []
     listfiles = os.listdir(path)
@@ -297,7 +297,7 @@ def custom_objective(y_true, y_pred):
     cce = abs(y_true - y_new_label)
     '''
     logEps=1e-8
-    cce = - (y_true * K.log(y_newi+logEps) + (1 - y_true)* K.log(1-y_new + logEps))
+    cce = - (y_true * K.log(y_new+logEps) + (1 - y_true)* K.log(1-y_new + logEps))
     return cce
 
 def set_cnn_model(input_dim = 4, input_length = 107):
@@ -387,6 +387,7 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
             #pdb.set_trace()
             ys = np.array(tmp_size *[y])
             model.fit(training, ys, batch_size = tmp_size, nb_epoch=1, verbose = 0)
+        model.reset_states()
             #ys = np_utils.to_categorical(ys)
             #model.train_on_batch(training, ys)
             
@@ -400,7 +401,7 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
     return predictions
 
 def run_milcnn():
-    data_dir = './GraphProt_CLIP_sequences/'
+    data_dir = '../data/GraphProt_CLIP_sequences/'
     #trids =  get_6_trids()
     #ordict = read_rna_dict()
     #embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
