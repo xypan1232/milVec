@@ -260,14 +260,14 @@ def get_bag_data(data):
         for bag_seq in bag_seqs:
             tri_fea = get_RNA_seq_concolutional_array(bag_seq)
             bag_subt.append(tri_fea)
-        
+        '''
         if len(bag_subt) >5:
             bag_subt = bag_subt[:5]
         if len(bag_subt) <5:
             rand_more = 5 - len(bag_subt)
             for ind in range(rand_more):
                 bag_subt.append(random.choice(bag_subt))
-        
+        '''
         bags.append(np.array(bag_subt))
     
         
@@ -418,7 +418,7 @@ def run_milcnn():
         predict = run_network(net, hid, train_bags, test_bags, train_labels)
         
         auc = roc_auc_score(test_labels, predict)
-        print auc
+        print 'AUC:', auc
         fw.write(str(auc) + '\n')
     fw.close()
         #run_mil_classifier(train_bags, train_labels, test_bags, test_labels)
