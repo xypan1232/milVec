@@ -367,9 +367,9 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
     model.add(Activation('softmax'))
     #categorical_crossentropy, binary_crossentropy, mil_squared_error
     #sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True) 
-    model.compile(loss=mil_squared_error, optimizer='rmsprop') 
-    print 'model training'
-    nb_epos= 5
+    #model.compile(loss=mil_squared_error, optimizer='rmsprop') 
+    #print 'model training'
+    #nb_epos= 5
     #model.fit(train_bags, y_bags, batch_size = 60, nb_epoch=nb_epos, verbose = 0)
     
 
