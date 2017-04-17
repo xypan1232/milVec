@@ -396,7 +396,7 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
 
         print 'predicting'
         #pdb.set_trace()
-        pred = model.predict_proba(testing)
+        pred = model.predict_proba(testing, verbose = 0)
         predictions.append(max(pred))
     return predictions
 
