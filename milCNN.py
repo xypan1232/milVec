@@ -390,11 +390,9 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
         model.reset_states()
             #ys = np_utils.to_categorical(ys)
             #model.train_on_batch(training, ys)
-            
+    print 'predicting'         
     predictions = []
     for testing in test_bags:
-
-        print 'predicting'
         #pdb.set_trace()
         pred = model.predict_proba(testing, verbose = 0)
         predictions.append(max(pred))
