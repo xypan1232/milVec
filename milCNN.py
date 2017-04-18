@@ -408,6 +408,7 @@ def run_milcnn():
         
         protein = protein.split('.')[0]
         print protein
+        fw.write(protein + '\t')
         train_bags, train_labels, test_bags, test_labels = get_all_embedding(protein)
         net =  set_cnn_model()
         
@@ -418,6 +419,10 @@ def run_milcnn():
         auc = roc_auc_score(test_labels, predict)
         print 'AUC:', auc
         fw.write(str(auc) + '\n')
+        mylabel = "\t".join(map(str, test_labels))
+        myprob = "\t".join(map(str, predict))  
+        fw.write(mylabel + '\n')
+        fw.write(myprob + '\n')
     fw.close()
         #run_mil_classifier(train_bags, train_labels, test_bags, test_labels)
 run_milcnn()
