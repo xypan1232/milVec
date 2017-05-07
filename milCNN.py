@@ -317,8 +317,9 @@ def set_cnn_model(input_dim = 4, input_length = 107):
     #model.add(MaxPooling1D(pool_length=3))
     #model.add(Flatten())
     model.add(Recalc(axis=1))
+    model.add(Flatten())
     model.add(Dropout(0.5))
-    model.add(Dense(nbfilter, activation='relu'))
+    model.add(Dense(nbfilter*2, activation='relu'))
     model.add(Dropout(0.5))
 
     return model
@@ -348,8 +349,8 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
 
     #categorical_crossentropy, binary_crossentropy
     #sgd = SGD(lr=0.01, decay=1e-6, momentum=0.9, nesterov=True) custom_objective
-    #model.compile(loss='binary_crossentropy', optimizer='rmsprop')
-    model.compile(loss=custom_objective, optimizer='rmsprop')
+    model.compile(loss='binary_crossentropy', optimizer='rmsprop')
+    #model.compile(loss=custom_objective, optimizer='rmsprop')
     print 'model training'
     nb_epos= 5
 
