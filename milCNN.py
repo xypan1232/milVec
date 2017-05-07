@@ -390,11 +390,12 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
         model.reset_states()
             #ys = np_utils.to_categorical(ys)
             #model.train_on_batch(training, ys)
-            
+    print 'predicting'         
     predictions = []
     for testing in test_bags:
 
         #print 'predicting'
+
         #pdb.set_trace()
         pred = model.predict_proba(testing, verbose = 0)
         predictions.append(max(pred))
@@ -410,6 +411,7 @@ def run_milcnn():
         
         protein = protein.split('.')[0]
         print protein
+        fw.write(protein + '\t')
         train_bags, train_labels, test_bags, test_labels = get_all_embedding(protein)
         net =  set_cnn_model()
         
@@ -420,6 +422,10 @@ def run_milcnn():
         auc = roc_auc_score(test_labels, predict)
         print 'AUC:', auc
         fw.write(str(auc) + '\n')
+        mylabel = "\t".join(map(str, test_labels))
+        myprob = "\t".join(map(str, predict))  
+        fw.write(mylabel + '\n')
+        fw.write(myprob + '\n')
     fw.close()
         #run_mil_classifier(train_bags, train_labels, test_bags, test_labels)
 run_milcnn()
