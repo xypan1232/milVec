@@ -13,8 +13,7 @@ from keras.layers import LSTM, Bidirectional
 from keras.layers.embeddings import Embedding
 from keras.layers.convolutional import Convolution2D, MaxPooling2D,Convolution1D, MaxPooling1D
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-#from customlayers import convolution2Dgroup, crosschannelnormalization, \
-#    splittensor, Softmax4D, Recalc, ReRank, ExtractDim, SoftReRank, ActivityRegularizerOneDim, RecalcExpand
+from customlayers import Recalc, ReRank, ExtractDim, SoftReRank, ActivityRegularizerOneDim, RecalcExpand, Softmax4D
 from keras.constraints import maxnorm
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
@@ -313,43 +312,17 @@ def set_cnn_model(input_dim = 4, input_length = 107):
     model.add(Activation('relu'))
     model.add(MaxPooling1D(pool_length=3))
     model.add(Flatten())
+    #model.add(Softmax4D(axis=1))
+
+    #model.add(MaxPooling1D(pool_length=3))
+    #model.add(Flatten())
+    model.add(Recalc(axis=1))
     model.add(Dropout(0.5))
     model.add(Dense(nbfilter, activation='relu'))
     model.add(Dropout(0.5))
 
     return model
 
-def set_cnn_embed(n_aa_symbols, input_length, embedded_dim, embedding_weights, nb_filter = 16):
-    #nb_filter = 64
-    filter_length = 10
-    dropout = 0.5
-    model = Sequential()
-    #pdb.set_trace()
-    model.add(Embedding(input_dim=n_aa_symbols+1, output_dim = embedded_dim, weights=[embedding_weights], input_length=input_length, trainable = True))
-    print 'after embed', model.output_shape
-    model.add(Convolution1D(nb_filter, filter_length, border_mode='valid', init='glorot_normal'))
-    model.add(Activation(LeakyReLU(.3)))
-    model.add(MaxPooling1D(pool_length=3))
-    model.add(Dropout(dropout))
-    
-    return model
-
-def get_cnn_network_graphprot(rna_len = 501, nb_filter = 16):
-    print 'configure cnn network'
-    embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim('rnaEmbedding25.pickle')
-    print 'symbol', n_nucl_symbols
-    model = set_cnn_embed(n_nucl_symbols, rna_len, embedded_rna_dim, embedding_rna_weights, nb_filter = nb_filter)
-    
-    #model.add(Bidirectional(LSTM(2*nbfilter)))
-    #model.add(Dropout(0.10))
-    model.add(Flatten())
-    model.add(Dense(nb_filter*50, activation='relu')) 
-    model.add(Dropout(0.50))
-    model.add(Dense(nb_filter*10, activation='sigmoid')) 
-    model.add(Dropout(0.50))
-    print model.output_shape
-    
-    return model
         
 def get_all_embedding(protein):
     
@@ -393,10 +366,6 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
     print 'predicting'         
     predictions = []
     for testing in test_bags:
-
-        #print 'predicting'
-
-        #pdb.set_trace()
         pred = model.predict_proba(testing, verbose = 0)
         predictions.append(max(pred))
     return predictions
