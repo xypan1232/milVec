@@ -65,35 +65,6 @@ def get_6_trids():
         ch5=chars[n%base]
         nucle_com.append(ch0 + ch1 + ch2 + ch3 + ch4 + ch5)
     return  nucle_com 
-def get_RNA_seq_concolutional_array(seq, motif_len = 4):
-    seq = seq.replace('U', 'T')
-    alpha = 'ACGT'
-    #for seq in seqs:
-    #for key, seq in seqs.iteritems():
-    row = (len(seq) + 2*motif_len - 2)
-    new_array = np.zeros((row, 4))
-    for i in range(motif_len-1):
-        new_array[i] = np.array([0.25]*4)
-    
-    for i in range(row-3, row):
-        new_array[i] = np.array([0.25]*4)
-        
-    #pdb.set_trace()
-    for i, val in enumerate(seq):
-        i = i + motif_len-1
-        if val not in 'ACGT':
-            new_array[i] = np.array([0.25]*4)
-            continue
-        #if val == 'N' or i < motif_len or i > len(seq) - motif_len:
-        #    new_array[i] = np.array([0.25]*4)
-        #else:
-        try:
-            index = alpha.index(val)
-            new_array[i][index] = 1
-        except:
-            pdb.set_trace()
-        #data[key] = new_array
-    return new_array
 
 def get_embed_dim_new(embed_file):
     with open(embed_file) as f:
@@ -316,7 +287,7 @@ def set_cnn_model(input_dim = 4, input_length = 107):
 
     #model.add(MaxPooling1D(pool_length=3))
     #model.add(Flatten())
-    model.add(Recalc(axis=1))
+    #model.add(Recalc(axis=1))
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(nbfilter*2, activation='relu'))
@@ -359,7 +330,7 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
         for training, y in zip(train_bags, y_bags):
             tmp_size = len(training)
             #pdb.set_trace()
-            ys = np.array(tmp_size *[y])
+            ys = np.array(tmp_size *[y]) # make the labels in the bag all have the same labels, maybe not correct?
             model.fit(training, ys, batch_size = tmp_size, nb_epoch=1, verbose = 0)
         model.reset_states()
             #ys = np_utils.to_categorical(ys)
@@ -373,9 +344,6 @@ def run_network(model, total_hid, train_bags, test_bags, y_bags):
 
 def run_milcnn():
     data_dir = '../data/GraphProt_CLIP_sequences/'
-    #trids =  get_6_trids()
-    #ordict = read_rna_dict()
-    #embedded_rna_dim, embedding_rna_weights, n_nucl_symbols = get_embed_dim_new('rnaEmbedding25.pickle')
     fw = open('result_micnn', 'w')
     for protein in os.listdir(data_dir):
         
